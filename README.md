@@ -45,6 +45,7 @@ A macOS menu bar app + CLI tool that reads text aloud using Apple TTS (default),
 - **Onboarding + Agent Handoff** — First-run setup configures voice, key, network mode, and launch at login, and can copy a `🦞 VoxClaw setup pointer` for your agent
 - **Teleprompter Overlay** — Floating overlay with word-by-word highlighting synced to speech; includes presets, deep appearance controls, and audio-only mode
 - **Three Voice Engines** — Apple (no setup), OpenAI (BYOK), or ElevenLabs (BYOK), with Apple fallback when cloud auth fails
+- **Automatic Updates** — In-app updates via Sparkle (notarized + EdDSA-signed); a "Check for Updates…" menu item too
 - **Multiple Input Methods** — Arguments, stdin pipe, file, clipboard, URL scheme, and LAN HTTP
 - **Network API for Agents** — `POST /read`, `GET /status`, and `GET /claw`, with request validation and structured status payloads
 - **Bonjour Discovery** — Advertises `_voxclaw._tcp` on LAN for peer/device discovery
@@ -242,6 +243,7 @@ Input (args/stdin/file/clipboard/url/network)
 - NWListener (Network.framework) for LAN text input
 - Bonjour service advertisement (`_voxclaw._tcp`) for discovery
 - Keychain Services for secure API key storage
+- Sparkle for notarized, EdDSA-signed in-app auto-updates
 
 ## For Agents
 
