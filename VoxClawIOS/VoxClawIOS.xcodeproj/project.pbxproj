@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2DEE1269C5AAE4D746DFFDF3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A56A62590252953479CC1933 /* Foundation.framework */; };
+		5C9F2C655B343FE07E479429 /* VoxClawActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56DE31DFC8C126C6DC616E1 /* VoxClawActivityAttributes.swift */; };
 		81720FC805575E80AFF309D3 /* VoxClawWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */; };
 		A1000001 /* VoxClawCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000002 /* VoxClawCore */; };
 		F8014569AAC6D63E02CDC89A /* VoxClawWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8875EE084A05F66CD948EE60 /* VoxClawWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -43,6 +44,7 @@
 		8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoxClawWidgets.swift; sourceTree = "<group>"; };
 		A1100001 /* VoxClawIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxClawIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A56A62590252953479CC1933 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		C56DE31DFC8C126C6DC616E1 /* VoxClawActivityAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VoxClawActivityAttributes.swift; path = VoxClawIOS/VoxClawActivityAttributes.swift; sourceTree = SOURCE_ROOT; };
 		CABED8D2A71E3BAD9F3C3393 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -102,6 +104,7 @@
 				A1400002 /* Products */,
 				4EC8840614BDA733A4ECC741 /* Frameworks */,
 				AEF3BB8885AD6B79580287BA /* VoxClawWidgets */,
+				C56DE31DFC8C126C6DC616E1 /* VoxClawActivityAttributes.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -234,6 +237,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				81720FC805575E80AFF309D3 /* VoxClawWidgets.swift in Sources */,
+				5C9F2C655B343FE07E479429 /* VoxClawActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
