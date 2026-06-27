@@ -3,6 +3,19 @@
 All notable changes to VoxClaw are documented here. Earlier releases are on the
 [GitHub releases page](https://github.com/malpern/VoxClaw/releases).
 
+## v1.4.0
+
+In-app auto-update via Sparkle.
+
+### Added
+- **Automatic updates** — VoxClaw now updates itself with [Sparkle](https://sparkle-project.org).
+  New versions are downloaded and installed in place; downloads are notarized and
+  EdDSA-signed end to end.
+- **"Check for Updates…"** menu item to check on demand.
+
+Note: this is the first Sparkle-enabled build, so install it once manually
+(download below). From here on, future updates arrive automatically.
+
 ## v1.3.0
 
 The ElevenLabs release — tight word-highlight sync, per-agent voices, and
