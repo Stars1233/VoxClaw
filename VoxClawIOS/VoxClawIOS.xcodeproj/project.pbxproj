@@ -7,11 +7,42 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2DEE1269C5AAE4D746DFFDF3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A56A62590252953479CC1933 /* Foundation.framework */; };
+		81720FC805575E80AFF309D3 /* VoxClawWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */; };
 		A1000001 /* VoxClawCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000002 /* VoxClawCore */; };
+		F8014569AAC6D63E02CDC89A /* VoxClawWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8875EE084A05F66CD948EE60 /* VoxClawWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B76B3870FB4FE9325B2574A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1600001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3B4BB4E9BDCFA60FF76D7DCB;
+			remoteInfo = VoxClawWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2B0AF911F48F01A019CC154E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F8014569AAC6D63E02CDC89A /* VoxClawWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		8875EE084A05F66CD948EE60 /* VoxClawWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VoxClawWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoxClawWidgets.swift; sourceTree = "<group>"; };
 		A1100001 /* VoxClawIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxClawIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A56A62590252953479CC1933 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		CABED8D2A71E3BAD9F3C3393 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -44,14 +75,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BD52B69DDF11C493D107E11F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2DEE1269C5AAE4D746DFFDF3 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4EC8840614BDA733A4ECC741 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CFF46B8C11477A708F2163E9 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A1400001 = {
 			isa = PBXGroup;
 			children = (
 				A1200001 /* VoxClawIOS */,
 				A1400002 /* Products */,
+				4EC8840614BDA733A4ECC741 /* Frameworks */,
+				AEF3BB8885AD6B79580287BA /* VoxClawWidgets */,
 			);
 			sourceTree = "<group>";
 		};
@@ -59,13 +108,49 @@
 			isa = PBXGroup;
 			children = (
 				A1100001 /* VoxClawIOS.app */,
+				8875EE084A05F66CD948EE60 /* VoxClawWidgets.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AEF3BB8885AD6B79580287BA /* VoxClawWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */,
+				CABED8D2A71E3BAD9F3C3393 /* Info.plist */,
+			);
+			name = VoxClawWidgets;
+			path = VoxClawWidgets;
+			sourceTree = "<group>";
+		};
+		CFF46B8C11477A708F2163E9 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				A56A62590252953479CC1933 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3B4BB4E9BDCFA60FF76D7DCB /* VoxClawWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A68401E800E9CCF9F260490E /* Build configuration list for PBXNativeTarget "VoxClawWidgets" */;
+			buildPhases = (
+				17FF3771DE287DFEC0120397 /* Sources */,
+				BD52B69DDF11C493D107E11F /* Frameworks */,
+				42BB60E6FE7249F55DCBF333 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VoxClawWidgets;
+			productName = VoxClawWidgets;
+			productReference = 8875EE084A05F66CD948EE60 /* VoxClawWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A1500001 /* VoxClawIOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1700001 /* Build configuration list for PBXNativeTarget "VoxClawIOS" */;
@@ -73,10 +158,12 @@
 				A1500002 /* Sources */,
 				A1300001 /* Frameworks */,
 				A1500003 /* Resources */,
+				2B0AF911F48F01A019CC154E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B07A2B688592FA3D9E903A7E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A1200001 /* VoxClawIOS */,
@@ -109,7 +196,7 @@
 			mainGroup = A1400001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A1800001 /* XCLocalSwiftPackageReference "../" */,
+				A1800001 /* XCLocalSwiftPackageReference ".." */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1400002 /* Products */;
@@ -117,11 +204,19 @@
 			projectRoot = "";
 			targets = (
 				A1500001 /* VoxClawIOS */,
+				3B4BB4E9BDCFA60FF76D7DCB /* VoxClawWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		42BB60E6FE7249F55DCBF333 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1500003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -132,6 +227,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		17FF3771DE287DFEC0120397 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81720FC805575E80AFF309D3 /* VoxClawWidgets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1500002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -141,7 +244,39 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		B07A2B688592FA3D9E903A7E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = VoxClawWidgets;
+			target = 3B4BB4E9BDCFA60FF76D7DCB /* VoxClawWidgets */;
+			targetProxy = B76B3870FB4FE9325B2574A7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		5480783262324B6F7CA61C0A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VoxClawWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.malpern.voxclaw.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		A1700004 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -277,6 +412,7 @@
 				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = VoxClawIOS/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VoxClaw;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -287,7 +423,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				INFOPLIST_KEY_CFBundleDisplayName = VoxClaw;
 				PRODUCT_BUNDLE_IDENTIFIER = com.malpern.voxclaw;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -306,6 +441,7 @@
 				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = VoxClawIOS/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VoxClaw;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -316,12 +452,35 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				INFOPLIST_KEY_CFBundleDisplayName = VoxClaw;
 				PRODUCT_BUNDLE_IDENTIFIER = com.malpern.voxclaw;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C60E13ED2B039746AB73940B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VoxClawWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.malpern.voxclaw.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -346,10 +505,19 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A68401E800E9CCF9F260490E /* Build configuration list for PBXNativeTarget "VoxClawWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C60E13ED2B039746AB73940B /* Release */,
+				5480783262324B6F7CA61C0A /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A1800001 /* XCLocalSwiftPackageReference "../" */ = {
+		A1800001 /* XCLocalSwiftPackageReference ".." */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../;
 		};
@@ -358,7 +526,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		A1000002 /* VoxClawCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A1800001 /* XCLocalSwiftPackageReference "../" */;
+			package = A1800001 /* XCLocalSwiftPackageReference ".." */;
 			productName = VoxClawCore;
 		};
 /* End XCSwiftPackageProductDependency section */
