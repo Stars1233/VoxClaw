@@ -8,6 +8,7 @@ enum AccessibilityID {
         static let settings = "menuBar.settings"
         static let about = "menuBar.about"
         static let help = "menuBar.help"
+        static let checkForUpdates = "menuBar.checkForUpdates"
         static let quit = "menuBar.quit"
     }
 

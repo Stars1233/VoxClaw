@@ -72,6 +72,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>NSAppleEventsUsageDescription</key><string>VoxClaw uses Apple Events to pause and resume playback in supported browser tabs before and after it speaks.</string>
     <key>BuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
     <key>GitCommit</key><string>${GIT_COMMIT}</string>
+    <key>SUFeedURL</key><string>https://malpern.github.io/VoxClaw/appcast.xml</string>
+    <key>SUPublicEDKey</key><string>4YXR9g0GN7tq3O6frg5sfkBWUhfioKXq6KuIP7xmdA8=</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
@@ -139,6 +141,20 @@ install_binary() {
 
 install_binary "$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
 
+# Embed Sparkle.framework (auto-update). SwiftPM links it via @rpath but does not
+# place it in the bundle, so copy the universal xcframework slice into
+# Contents/Frameworks and add the rpath the linked binary needs to find it.
+SPARKLE_FW="$(find "$ROOT/.build/artifacts" -type d -path '*Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework' 2>/dev/null | head -1)"
+if [[ -n "$SPARKLE_FW" ]]; then
+  mkdir -p "$APP/Contents/Frameworks"
+  ditto "$SPARKLE_FW" "$APP/Contents/Frameworks/Sparkle.framework"
+  if ! otool -l "$APP/Contents/MacOS/$APP_NAME" | grep -q "@executable_path/../Frameworks"; then
+    install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/$APP_NAME"
+  fi
+else
+  echo "WARN: Sparkle.framework not found in .build/artifacts; auto-update will be unavailable." >&2
+fi
+
 # Copy app icon.
 ICON_SOURCE="$ROOT/Sources/VoxClawCore/Resources/AppIcon.icns"
 if [[ -f "$ICON_SOURCE" ]]; then
@@ -180,6 +196,20 @@ if [[ -f "$PROVISION_PROFILE" && ("$SIGNING_MODE" != "adhoc" && -n "$APP_IDENTIT
   cp "$PROVISION_PROFILE" "$APP/Contents/embedded.provisionprofile"
 fi
 
+# Sign Sparkle's nested code inner-to-outer (must happen before the outer app
+# sign). XPC services keep their own entitlements. For Developer ID builds these
+# inherit --options runtime + --timestamp from CODESIGN_ARGS so notarization passes.
+sign_sparkle() {
+  local fw="$APP/Contents/Frameworks/Sparkle.framework"
+  [[ -d "$fw" ]] || return 0
+  local v="$fw/Versions/B"
+  codesign "${CODESIGN_ARGS[@]}" --preserve-metadata=entitlements "$v/XPCServices/Downloader.xpc"
+  codesign "${CODESIGN_ARGS[@]}" --preserve-metadata=entitlements "$v/XPCServices/Installer.xpc"
+  codesign "${CODESIGN_ARGS[@]}" "$v/Autoupdate"
+  codesign "${CODESIGN_ARGS[@]}" "$v/Updater.app"
+  codesign "${CODESIGN_ARGS[@]}" "$fw"
+}
+
 # Code sign.
 APP_ENTITLEMENTS="${APP_ENTITLEMENTS:-$BASE_ENTITLEMENTS}"
 if [[ "$SIGNING_MODE" == "adhoc" || -z "$APP_IDENTITY" ]]; then
@@ -191,11 +221,13 @@ if [[ "$SIGNING_MODE" == "adhoc" || -z "$APP_IDENTITY" ]]; then
   /usr/libexec/PlistBuddy -c "Delete :com.apple.application-identifier" "$ADHOC_ENTITLEMENTS" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Delete :com.apple.developer.ubiquity-kvstore-identifier" "$ADHOC_ENTITLEMENTS" 2>/dev/null || true
   CODESIGN_ARGS=(--force --sign "-")
+  sign_sparkle
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$ADHOC_ENTITLEMENTS" \
     "$APP"
 else
   CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$APP_IDENTITY")
+  sign_sparkle
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$APP_ENTITLEMENTS" \
     "$APP"

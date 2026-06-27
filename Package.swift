@@ -13,12 +13,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],
     targets: [
         .target(
             name: "VoxClawCore",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser", condition: .when(platforms: [.macOS])),
+                .product(name: "Sparkle", package: "Sparkle", condition: .when(platforms: [.macOS])),
             ],
             path: "Sources/VoxClawCore",
             exclude: ["Resources"],

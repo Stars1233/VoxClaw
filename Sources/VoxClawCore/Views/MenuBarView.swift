@@ -7,6 +7,7 @@ struct MenuBarView: View {
 
     let appState: AppState
     let settings: SettingsManager
+    @ObservedObject var updater: VoxClawUpdater
     var onTogglePause: () -> Void = {}
     var onStop: () -> Void = {}
     var onReadText: (String) async -> Void = { _ in }
@@ -93,6 +94,12 @@ struct MenuBarView: View {
                 NSWorkspace.shared.open(URL(string: "https://malpern.github.io/VoxClaw/help/")!)
             }
             .accessibilityIdentifier(AccessibilityID.MenuBar.help)
+
+            Button("Check for Updates…") {
+                updater.checkForUpdates()
+            }
+            .disabled(!updater.canCheckForUpdates)
+            .accessibilityIdentifier(AccessibilityID.MenuBar.checkForUpdates)
 
             Divider()
 

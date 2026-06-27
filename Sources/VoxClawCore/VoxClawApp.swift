@@ -286,6 +286,9 @@ struct VoxClawApp: App {
     /// Retains the Services menu provider for the lifetime of the app.
     @State private var serviceProvider: VoxClawServiceProvider?
 
+    /// Sparkle auto-updater (drives the "Check for Updates…" menu item).
+    @StateObject private var updater = VoxClawUpdater()
+
     init() {
         Log.app.info("App init, creating MenuBarExtra")
     }
@@ -295,6 +298,7 @@ struct VoxClawApp: App {
             MenuBarView(
                 appState: appState,
                 settings: settings,
+                updater: updater,
                 onTogglePause: { coordinator.togglePause() },
                 onStop: { coordinator.stop() },
                 onReadText: { text in await coordinator.readText(text, appState: appState, settings: settings) }

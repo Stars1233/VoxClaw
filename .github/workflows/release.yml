@@ -89,3 +89,32 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # EdDSA-sign the released zip and publish a Sparkle appcast entry on main so
+      # existing installs can auto-update. Skips if the signing key isn't set.
+      - name: Sign update + publish appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [[ -z "${SPARKLE_PRIVATE_KEY:-}" ]]; then
+            echo "SPARKLE_PRIVATE_KEY not set; skipping appcast publish."
+            exit 0
+          fi
+          SIGN="$(find .build/artifacts -type f -name sign_update | head -1)"
+          OUT="$(printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SIGN" --ed-key-file - VoxClaw.zip)"
+          SIG="$(printf '%s' "$OUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')"
+          LEN="$(printf '%s' "$OUT" | sed -n 's/.*length="\([0-9]*\)".*/\1/p')"
+          source version.env
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/VoxClaw.zip"
+          # The CI build patched Package.swift in-tree; discard it before switching branches.
+          git checkout -- Package.swift 2>/dev/null || true
+          git fetch --depth=1 origin main
+          git checkout main
+          ./Scripts/update_appcast.sh docs/appcast.xml "$MARKETING_VERSION" "$BUILD_NUMBER" "$URL" "$SIG" "$LEN"
+          if ! git diff --quiet docs/appcast.xml; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/appcast.xml
+            git commit -m "appcast: VoxClaw ${MARKETING_VERSION} (build ${BUILD_NUMBER}) [skip ci]"
+            git push origin main
+          fi
