@@ -38,6 +38,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		83E82130606CA6B402120C2E /* VoxClawWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = VoxClawWidgets.entitlements; sourceTree = "<group>"; };
 		8875EE084A05F66CD948EE60 /* VoxClawWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VoxClawWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoxClawWidgets.swift; sourceTree = "<group>"; };
 		A1100001 /* VoxClawIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxClawIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -118,6 +119,7 @@
 			children = (
 				8CBED8ABA7937022A38C89D1 /* VoxClawWidgets.swift */,
 				CABED8D2A71E3BAD9F3C3393 /* Info.plist */,
+				83E82130606CA6B402120C2E /* VoxClawWidgets.entitlements */,
 			);
 			name = VoxClawWidgets;
 			path = VoxClawWidgets;
@@ -258,6 +260,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = VoxClawWidgets/VoxClawWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = VoxClawWidgets/Info.plist;
@@ -464,6 +467,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = VoxClawWidgets/VoxClawWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = VoxClawWidgets/Info.plist;

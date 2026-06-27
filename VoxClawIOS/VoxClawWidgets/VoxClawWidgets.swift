@@ -1,48 +1,94 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
-// Minimal placeholder widget — proves the extension target builds and embeds.
-// Control Center control, interactive widget, and Live Activity are added next.
+// App Group shared between the app and this extension. The control/widget can't
+// play audio from the extension process, so they signal the app (which reads the
+// clipboard aloud when it becomes active).
+enum WidgetBridge {
+    static let appGroup = "group.com.malpern.voxclaw"
+    static let pendingReadClipboardKey = "voxclaw.pendingReadClipboard"
 
-struct PlaceholderEntry: TimelineEntry {
+    static func requestClipboardRead() {
+        UserDefaults(suiteName: appGroup)?.set(Date.now.timeIntervalSince1970, forKey: pendingReadClipboardKey)
+    }
+}
+
+/// Reads the clipboard aloud. Opens the app (audio can't play from an extension),
+/// signalling it via the shared App Group; the app performs the read on activation.
+struct ReadClipboardIntent: AppIntent {
+    static let title: LocalizedStringResource = "Read Clipboard Aloud"
+    static let description = IntentDescription("Reads the clipboard aloud with VoxClaw.")
+    static let openAppWhenRun = true
+
+    func perform() async throws -> some IntentResult {
+        WidgetBridge.requestClipboardRead()
+        return .result()
+    }
+}
+
+// MARK: - Control Center control
+
+struct ReadClipboardControl: ControlWidget {
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: "com.malpern.voxclaw.readClipboard") {
+            ControlWidgetButton(action: ReadClipboardIntent()) {
+                Label("Read Clipboard", systemImage: "waveform")
+            }
+        }
+        .displayName("Read Clipboard")
+        .description("Read the clipboard aloud with VoxClaw.")
+    }
+}
+
+// MARK: - Interactive home-screen widget
+
+private struct WidgetEntry: TimelineEntry {
     let date: Date
 }
 
-struct PlaceholderProvider: TimelineProvider {
-    func placeholder(in context: Context) -> PlaceholderEntry { PlaceholderEntry(date: .now) }
-    func getSnapshot(in context: Context, completion: @escaping (PlaceholderEntry) -> Void) {
-        completion(PlaceholderEntry(date: .now))
+private struct WidgetProvider: TimelineProvider {
+    func placeholder(in context: Context) -> WidgetEntry { WidgetEntry(date: .now) }
+    func getSnapshot(in context: Context, completion: @escaping (WidgetEntry) -> Void) {
+        completion(WidgetEntry(date: .now))
     }
-    func getTimeline(in context: Context, completion: @escaping (Timeline<PlaceholderEntry>) -> Void) {
-        completion(Timeline(entries: [PlaceholderEntry(date: .now)], policy: .never))
+    func getTimeline(in context: Context, completion: @escaping (Timeline<WidgetEntry>) -> Void) {
+        completion(Timeline(entries: [WidgetEntry(date: .now)], policy: .never))
     }
 }
 
-struct VoxClawWidgetEntryView: View {
-    var entry: PlaceholderEntry
+private struct ReadClipboardWidgetView: View {
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             Image(systemName: "waveform")
-            Text("VoxClaw")
-                .font(.caption)
+                .font(.title2)
+            Button(intent: ReadClipboardIntent()) {
+                Text("Read Clipboard")
+                    .font(.caption.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
         }
+        .containerBackground(.fill.tertiary, for: .widget)
     }
 }
 
-struct VoxClawWidget: Widget {
-    let kind = "VoxClawWidget"
+struct ReadClipboardWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: PlaceholderProvider()) { entry in
-            VoxClawWidgetEntryView(entry: entry)
+        StaticConfiguration(kind: "VoxClawReadClipboardWidget", provider: WidgetProvider()) { _ in
+            ReadClipboardWidgetView()
         }
-        .configurationDisplayName("VoxClaw")
-        .description("VoxClaw.")
+        .configurationDisplayName("Read Clipboard")
+        .description("Tap to read the clipboard aloud.")
+        .supportedFamilies([.systemSmall])
     }
 }
+
+// MARK: - Bundle
 
 @main
 struct VoxClawWidgetBundle: WidgetBundle {
     var body: some Widget {
-        VoxClawWidget()
+        ReadClipboardWidget()
+        ReadClipboardControl()
     }
 }
