@@ -5,6 +5,16 @@
     <link>https://malpern.github.io/VoxClaw/appcast.xml</link>
     <description>Software updates for VoxClaw.</description>
     <language>en</language>
+<item>
+      <title>VoxClaw 1.4.0</title>
+      <link>https://github.com/malpern/VoxClaw/releases/tag/v1.4.0</link>
+      <sparkle:version>9</sparkle:version>
+      <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <pubDate>Sat, 27 Jun 2026 22:25:00 +0000</pubDate>
+      <description><![CDATA[<p>See the <a href="https://github.com/malpern/VoxClaw/releases/tag/v1.4.0">release notes</a>.</p>]]></description>
+      <enclosure url="https://github.com/malpern/VoxClaw/releases/download/v1.4.0/VoxClaw.zip" sparkle:edSignature="xDlY50mUGkApcYcHrgdPVIC7lkb4bUg6VBe42Tqgyo56mmgtmLmiwh92xCZjjuVX0YYYJGitMy7eLruYQDpvAw==" length="5239083" type="application/octet-stream" />
+    </item>
     <item>
       <title>VoxClaw 1.3.0</title>
       <link>https://github.com/malpern/VoxClaw/releases/tag/v1.3.0</link>
