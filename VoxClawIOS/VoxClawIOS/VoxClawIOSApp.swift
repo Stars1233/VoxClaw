@@ -4,9 +4,11 @@ import VoxClawCore
 
 @main
 struct VoxClawIOSApp: App {
-    @State private var appState = AppState()
-    @State private var settings = SettingsManager()
-    @State private var coordinator = iOSCoordinator()
+    // Shared singletons so App Intents (Siri/Spotlight/Shortcuts) drive the same
+    // state as the UI.
+    @State private var appState = SharedIOSApp.appState
+    @State private var settings = SharedIOSApp.settings
+    @State private var coordinator = SharedIOSApp.coordinator
 
     var body: some Scene {
         WindowGroup {

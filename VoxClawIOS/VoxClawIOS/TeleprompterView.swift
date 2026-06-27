@@ -59,7 +59,7 @@ struct TeleprompterView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(.ultraThinMaterial, in: Capsule())
+                        .controlGlass(in: Capsule())
                         .transition(.opacity)
                         .padding(.bottom, 70)
                 }
@@ -98,7 +98,7 @@ struct TeleprompterView: View {
                             .font(.system(.body, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .controlGlass(in: Circle(), interactive: true)
                     }
 
                     Spacer()
@@ -108,7 +108,7 @@ struct TeleprompterView: View {
                             .font(.system(.body, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .controlGlass(in: Circle(), interactive: true)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -222,6 +222,19 @@ private struct TeleprompterWordView: View {
             return base.opacity(appearance.pastWordOpacity)
         } else {
             return base.opacity(appearance.futureWordOpacity)
+        }
+    }
+}
+
+private extension View {
+    /// Background chrome using the system Liquid Glass material, falling back to
+    /// the older translucent material on systems without it.
+    @ViewBuilder
+    func controlGlass(in shape: some Shape, interactive: Bool = false) -> some View {
+        if #available(iOS 26, *) {
+            self.glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
+        } else {
+            self.background(.ultraThinMaterial, in: shape)
         }
     }
 }
