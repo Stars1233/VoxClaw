@@ -3,6 +3,14 @@
 All notable changes to VoxClaw are documented here. Earlier releases are on the
 [GitHub releases page](https://github.com/malpern/VoxClaw/releases).
 
+## v1.4.1
+
+### Added
+- **Liquid Glass overlay background** — an optional teleprompter background that
+  uses the system Liquid Glass material (tinted by your chosen color), so it
+  inherits macOS 27's translucency and readability. Toggle it in overlay
+  appearance settings; off by default.
+
 ## v1.4.0
 
 In-app auto-update via Sparkle.
