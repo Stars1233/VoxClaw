@@ -56,6 +56,7 @@ enum AccessibilityID {
         static let futureOpacitySlider = "appearance.futureOpacitySlider"
         static let bgColorPicker = "appearance.bgColorPicker"
         static let bgOpacitySlider = "appearance.bgOpacitySlider"
+        static let glassBackgroundToggle = "appearance.glassBackgroundToggle"
         static let panelWidthSlider = "appearance.panelWidthSlider"
         static let panelHeightSlider = "appearance.panelHeightSlider"
         static let hPaddingSlider = "appearance.hPaddingSlider"

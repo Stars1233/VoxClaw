@@ -51,6 +51,11 @@ public struct OverlayAppearance: Codable, Sendable, Equatable {
     public var futureWordOpacity: Double = 0.9
     public var codeWordColor: CodableColor = CodableColor(red: 0.68, green: 0.68, blue: 0.90, opacity: 1.0)
     public var backgroundColor: CodableColor = CodableColor(red: 0, green: 0, blue: 0, opacity: 0.85)
+    /// When true, the overlay background uses the system Liquid Glass material
+    /// (tinted by `backgroundColor`) instead of a flat fill, so it inherits the
+    /// OS's translucency/readability treatment. Falls back to the flat fill on
+    /// systems without Liquid Glass.
+    public var glassBackground: Bool = false
     public var cornerRadius: CGFloat = 20
     public var horizontalPadding: CGFloat = 20
     public var verticalPadding: CGFloat = 16
@@ -68,7 +73,7 @@ public struct OverlayAppearance: Codable, Sendable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case fontFamily, fontSize, fontWeight, lineHeightMultiplier, wordSpacing
         case textColor, highlightColor, pastWordOpacity, futureWordOpacity, codeWordColor
-        case backgroundColor, cornerRadius, horizontalPadding, verticalPadding
+        case backgroundColor, glassBackground, cornerRadius, horizontalPadding, verticalPadding
         case panelWidthFraction, panelHeight
         // Legacy key — only used for decoding old data.
         case lineSpacing
@@ -95,6 +100,7 @@ public struct OverlayAppearance: Codable, Sendable, Equatable {
         futureWordOpacity = try container.decodeIfPresent(Double.self, forKey: .futureWordOpacity) ?? defaults.futureWordOpacity
         codeWordColor = try container.decodeIfPresent(CodableColor.self, forKey: .codeWordColor) ?? defaults.codeWordColor
         backgroundColor = try container.decodeIfPresent(CodableColor.self, forKey: .backgroundColor) ?? defaults.backgroundColor
+        glassBackground = try container.decodeIfPresent(Bool.self, forKey: .glassBackground) ?? defaults.glassBackground
         cornerRadius = try container.decodeIfPresent(CGFloat.self, forKey: .cornerRadius) ?? defaults.cornerRadius
         horizontalPadding = try container.decodeIfPresent(CGFloat.self, forKey: .horizontalPadding) ?? defaults.horizontalPadding
         verticalPadding = try container.decodeIfPresent(CGFloat.self, forKey: .verticalPadding) ?? defaults.verticalPadding
@@ -115,6 +121,7 @@ public struct OverlayAppearance: Codable, Sendable, Equatable {
         try container.encode(futureWordOpacity, forKey: .futureWordOpacity)
         try container.encode(codeWordColor, forKey: .codeWordColor)
         try container.encode(backgroundColor, forKey: .backgroundColor)
+        try container.encode(glassBackground, forKey: .glassBackground)
         try container.encode(cornerRadius, forKey: .cornerRadius)
         try container.encode(horizontalPadding, forKey: .horizontalPadding)
         try container.encode(verticalPadding, forKey: .verticalPadding)

@@ -15,6 +15,7 @@ struct OverlayAppearanceTests {
         appearance.pastWordOpacity = 0.3
         appearance.futureWordOpacity = 0.7
         appearance.backgroundColor = CodableColor(red: 0.2, green: 0.2, blue: 0.2, opacity: 0.9)
+        appearance.glassBackground = true
         appearance.cornerRadius = 12
         appearance.horizontalPadding = 24
         appearance.verticalPadding = 20
@@ -25,6 +26,16 @@ struct OverlayAppearanceTests {
         let decoded = try JSONDecoder().decode(OverlayAppearance.self, from: data)
 
         #expect(decoded == appearance)
+        #expect(decoded.glassBackground == true)
+    }
+
+    @Test func glassBackgroundDefaultsOffAndDecodesFromLegacyData() throws {
+        // Default is off (preserves existing behavior).
+        #expect(OverlayAppearance().glassBackground == false)
+        // Legacy persisted data without the key decodes to the default.
+        let legacy = "{\"fontSize\":28}".data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(OverlayAppearance.self, from: legacy)
+        #expect(decoded.glassBackground == false)
     }
 
     @Test func defaultValuesMatchHardCodedAppearance() {

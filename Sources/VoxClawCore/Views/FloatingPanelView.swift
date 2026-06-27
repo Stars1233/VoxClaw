@@ -19,10 +19,28 @@ struct FloatingPanelView: View {
         return Double(appState.currentWordIndex) / Double(appState.words.count - 1)
     }
 
+    /// Overlay background: system Liquid Glass (tinted by the chosen color) when
+    /// enabled and supported, otherwise the flat fill. Glass lets the teleprompter
+    /// inherit the OS's translucency/readability treatment.
+    @ViewBuilder
+    private var overlayBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: appearance.cornerRadius)
+#if compiler(>=6.2)
+        if appearance.glassBackground, #available(macOS 26, iOS 26, *) {
+            shape
+                .fill(.clear)
+                .glassEffect(.regular.tint(appearance.backgroundColor.color), in: shape)
+        } else {
+            shape.fill(appearance.backgroundColor.color)
+        }
+#else
+        shape.fill(appearance.backgroundColor.color)
+#endif
+    }
+
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: appearance.cornerRadius)
-                .fill(appearance.backgroundColor.color)
+            overlayBackground
 
             ScrollViewReader { proxy in
                 ScrollView(.vertical, showsIndicators: false) {

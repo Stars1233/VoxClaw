@@ -68,6 +68,12 @@ public struct OverlayAppearanceSettingsView: View {
                             .accessibilityIdentifier(AccessibilityID.Appearance.bgOpacitySlider)
                     }
 
+                    Toggle("Liquid Glass background", isOn: glassBackgroundBinding)
+                        .accessibilityIdentifier(AccessibilityID.Appearance.glassBackgroundToggle)
+                    Text("Uses the system Liquid Glass material, tinted by the background color. The opacity slider controls the tint.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     Button("Reset to Defaults") {
                         settings.overlayAppearance = .resetToDefaults()
                     }
@@ -172,6 +178,13 @@ public struct OverlayAppearanceSettingsView: View {
         Binding(
             get: { settings.overlayAppearance.backgroundColor.opacity },
             set: { settings.overlayAppearance.backgroundColor.opacity = $0 }
+        )
+    }
+
+    private var glassBackgroundBinding: Binding<Bool> {
+        Binding(
+            get: { settings.overlayAppearance.glassBackground },
+            set: { settings.overlayAppearance.glassBackground = $0 }
         )
     }
 }
