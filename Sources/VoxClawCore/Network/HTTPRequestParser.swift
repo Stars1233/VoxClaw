@@ -13,6 +13,9 @@ public struct ReadRequest: Sendable {
     public var relayed: Bool
     /// True for test speech — always plays locally even if muted.
     public var forceLocal: Bool
+    /// Explicit engine for this request ("apple" | "openai" | "elevenlabs").
+    /// Overrides the global engine setting for this read only. `nil` = use the setting.
+    public var engine: VoiceEngineType?
 
     public init(
         text: String,
@@ -22,7 +25,8 @@ public struct ReadRequest: Sendable {
         projectId: String? = nil,
         agentId: String? = nil,
         relayed: Bool = false,
-        forceLocal: Bool = false
+        forceLocal: Bool = false,
+        engine: VoiceEngineType? = nil
     ) {
         self.text = text
         self.voice = voice
@@ -32,6 +36,7 @@ public struct ReadRequest: Sendable {
         self.agentId = agentId
         self.relayed = relayed
         self.forceLocal = forceLocal
+        self.engine = engine
     }
 }
 
@@ -116,6 +121,7 @@ public enum HTTPRequestParser {
             let agentId = (json["agent_id"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
             let relayed = (json["relayed"] as? Bool) ?? false
             let forceLocal = (json["force_local"] as? Bool) ?? false
+            let engine = (json["engine"] as? String).flatMap { VoiceEngineType(rawValue: $0.lowercased()) }
             return ReadRequest(
                 text: text,
                 voice: voice,
@@ -124,7 +130,8 @@ public enum HTTPRequestParser {
                 projectId: projectId?.isEmpty == true ? nil : projectId,
                 agentId: agentId?.isEmpty == true ? nil : agentId,
                 relayed: relayed,
-                forceLocal: forceLocal
+                forceLocal: forceLocal,
+                engine: engine
             )
         }
 
@@ -160,7 +167,18 @@ public enum HTTPRequestParser {
         return ControlRequest(action: action, origin: origin)
     }
 
-    static func parseAckRequest(from body: String) -> String? {
+    /// Parsed payload from a POST /ack request. `agentId` scopes the ack to a single
+    /// agent within the project; when nil, the ack applies to the whole project.
+    public struct AckRequest: Sendable {
+        public let projectId: String
+        public let agentId: String?
+        public init(projectId: String, agentId: String? = nil) {
+            self.projectId = projectId
+            self.agentId = agentId
+        }
+    }
+
+    static func parseAckRequest(from body: String) -> AckRequest? {
         let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty,
               let data = trimmed.data(using: .utf8),
@@ -168,6 +186,10 @@ public enum HTTPRequestParser {
               let projectId = json["project_id"] as? String,
               !projectId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else { return nil }
-        return projectId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let agentId = (json["agent_id"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return AckRequest(
+            projectId: projectId.trimmingCharacters(in: .whitespacesAndNewlines),
+            agentId: (agentId?.isEmpty == true) ? nil : agentId
+        )
     }
 }

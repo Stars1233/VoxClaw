@@ -14,7 +14,7 @@ public final class NetworkListener {
     private let appState: AppState
     private let settings: SettingsManager
     private var onReadRequest: (@Sendable (ReadRequest) async -> Void)?
-    private var onAck: (@Sendable (String) async -> Void)?
+    private var onAck: (@Sendable (HTTPRequestParser.AckRequest) async -> Void)?
     private var onControl: (@Sendable (HTTPRequestParser.ControlRequest) async -> Void)?
     private var voiceBindingCountProvider: (@Sendable () async -> Int)?
 
@@ -29,7 +29,7 @@ public final class NetworkListener {
 
     public func start(
         onReadRequest: @escaping @Sendable (ReadRequest) async -> Void,
-        onAck: @escaping @Sendable (String) async -> Void = { _ in },
+        onAck: @escaping @Sendable (HTTPRequestParser.AckRequest) async -> Void = { _ in },
         onControl: @escaping @Sendable (HTTPRequestParser.ControlRequest) async -> Void = { _ in },
         voiceBindingCountProvider: (@Sendable () async -> Int)? = nil
     ) throws {

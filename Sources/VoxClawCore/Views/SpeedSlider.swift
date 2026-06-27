@@ -65,23 +65,26 @@ public struct SpeedSlider: View {
                         .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
                         .frame(width: thumbSize, height: thumbSize)
                         .offset(x: thumbX - thumbSize / 2)
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { drag in
-                                    let newFrac = drag.location.x / trackWidth
-                                    let newVal = value(for: newFrac)
-                                    if newVal != speed {
-                                        let oldSpeed = speed
-                                        speed = newVal
-                                        checkDetent(old: oldSpeed, new: newVal)
-                                    }
-                                }
-                                .onEnded { drag in
-                                    snapToNearestDetent()
-                                }
-                        )
                 }
                 .frame(height: thumbSize)
+                // Hit-test the whole track so a click or drag anywhere sets the
+                // speed to that position (not just dragging the thumb).
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { drag in
+                            let newFrac = drag.location.x / trackWidth
+                            let newVal = value(for: newFrac)
+                            if newVal != speed {
+                                let oldSpeed = speed
+                                speed = newVal
+                                checkDetent(old: oldSpeed, new: newVal)
+                            }
+                        }
+                        .onEnded { _ in
+                            snapToNearestDetent()
+                        }
+                )
             }
             .frame(height: thumbSize)
 

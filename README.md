@@ -128,6 +128,18 @@ curl -X POST http://your-mac-ip:4140/read \
   -H 'Content-Type: application/json' \
   -d '{"text": "Hello", "voice": "nova", "rate": 1.3}'
 
+# Force a specific engine for this read (apple | openai | elevenlabs).
+# ElevenLabs gives the tightest word-highlight sync.
+curl -X POST http://your-mac-ip:4140/read \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "Hello", "engine": "elevenlabs"}'
+
+# Multi-agent: pass project_id + agent_id to get a distinct voice per agent
+# and so prompting one agent never cuts off another that is still speaking.
+curl -X POST http://your-mac-ip:4140/read \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "Hello", "project_id": "/path/to/repo", "agent_id": "session-123"}'
+
 # Plain text body
 curl -X POST http://your-mac-ip:4140/read -d 'Hello from my phone'
 

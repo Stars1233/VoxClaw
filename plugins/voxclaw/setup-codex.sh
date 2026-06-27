@@ -28,13 +28,20 @@ fi
 for hook in voxclaw-codex-stop-speak.sh voxclaw-codex-ack.sh; do
   src="$SOURCE_HOOKS/$hook"
   dst="$HOOKS_DIR/$hook"
-  if [[ -f "$src" ]]; then
-    cp "$src" "$dst"
-    chmod +x "$dst"
-    echo "  Installed $dst"
-  else
+  if [[ ! -f "$src" ]]; then
     echo "  Warning: $src not found, skipping" >&2
+    continue
   fi
+  # Never install a hook that fails to parse — a broken hook would error on every
+  # turn. Validate syntax first and leave any existing good copy untouched.
+  if ! bash -n "$src" 2>/dev/null; then
+    echo "  ERROR: $hook has a syntax error, NOT installing:" >&2
+    bash -n "$src" >&2 || true
+    exit 1
+  fi
+  cp "$src" "$dst"
+  chmod +x "$dst"
+  echo "  Installed $dst"
 done
 
 # Merge hook entries into config.toml

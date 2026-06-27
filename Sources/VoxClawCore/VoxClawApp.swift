@@ -394,8 +394,8 @@ final class AppCoordinator: SpeechQueueDelegate {
                 onReadRequest: { [weak self] request in
                     await self?.handleReadRequest(request, appState: appState, settings: settings)
                 },
-                onAck: { [weak self] projectId in
-                    await self?.handleAck(projectId: projectId, appState: appState)
+                onAck: { [weak self] ack in
+                    await self?.handleAck(projectId: ack.projectId, agentId: ack.agentId, appState: appState)
                 },
                 onControl: { [weak self] control in
                     await self?.handleControl(control)
@@ -425,7 +425,9 @@ final class AppCoordinator: SpeechQueueDelegate {
                 resolvedRequest.text,
                 appState: appState,
                 settings: settings,
-                projectId: resolvedRequest.projectId
+                projectId: resolvedRequest.projectId,
+                agentId: resolvedRequest.agentId,
+                requestedEngine: resolvedRequest.engine
             )
         } else {
             Log.session.info("Local playback muted, skipping")
@@ -481,37 +483,74 @@ final class AppCoordinator: SpeechQueueDelegate {
     // MARK: - SpeechQueueDelegate
 
     func makeEngine(for item: SpeechQueueCoordinator.QueueItem, settings: SettingsManager) async -> (any SpeechEngine)? {
-        let rate = item.engineOverride != nil ? nil : settings.voiceSpeed
         guard item.engineOverride == nil else { return item.engineOverride }
 
-        let request = ReadRequest(
-            text: item.text,
-            rate: rate,
-            projectId: item.projectId
-        )
+        // Resolve a distinct voice per (project, agent) for each engine, so multiple
+        // agents speaking through the queue get distinguishable voices. Falls back to
+        // the engine's global default voice when no project_id is supplied.
         let assignedOpenAI = await voiceAssigner.resolveVoice(
             projectId: item.projectId,
-            agentId: nil,
+            agentId: item.agentId,
             engine: .openai
         )
         let openaiVoice = assignedOpenAI ?? settings.openAIVoice
 
         let assignedApple = await voiceAssigner.resolveVoice(
             projectId: item.projectId,
-            agentId: nil,
+            agentId: item.agentId,
             engine: .apple
         )
         let appleVoice = assignedApple ?? settings.appleVoiceIdentifier
+
+        let assignedElevenLabs = await voiceAssigner.resolveVoice(
+            projectId: item.projectId,
+            agentId: item.agentId,
+            engine: .elevenlabs
+        )
+        let elevenLabsVoice = assignedElevenLabs ?? settings.elevenLabsVoiceID
+
         let engineRate = settings.voiceSpeed
         let instructions = settings.readingStyle.isEmpty ? nil : settings.readingStyle
 
-        if !settings.openAIAPIKey.isEmpty {
+        func appleEngine() -> any SpeechEngine {
+            AppleSpeechEngine(voiceIdentifier: appleVoice, rate: engineRate)
+        }
+        // ElevenLabs returns server-side character timestamps → exact word-highlight
+        // sync. OpenAI/ElevenLabs both fall back to Apple if their request fails.
+        func elevenLabsEngine() -> any SpeechEngine {
+            let primary = ElevenLabsSpeechEngine(
+                apiKey: settings.elevenLabsAPIKey,
+                voiceID: elevenLabsVoice,
+                speed: engineRate,
+                turbo: settings.elevenLabsTurbo
+            )
+            return FallbackSpeechEngine(primary: primary, fallback: appleEngine())
+        }
+        func openAIEngine() -> any SpeechEngine {
             let primary = OpenAISpeechEngine(apiKey: settings.openAIAPIKey, voice: openaiVoice, speed: engineRate, instructions: instructions)
-            let fallback = AppleSpeechEngine(voiceIdentifier: appleVoice, rate: engineRate)
-            return FallbackSpeechEngine(primary: primary, fallback: fallback)
+            return FallbackSpeechEngine(primary: primary, fallback: appleEngine())
+        }
+
+        // An explicit per-request engine (POST /read {"engine": ...}) wins over the
+        // global setting. Unavailable requests (e.g. elevenlabs with no key) fall through.
+        if let requested = item.requestedEngine {
+            switch requested {
+            case .elevenlabs where settings.isElevenLabsConfigured: return elevenLabsEngine()
+            case .openai where !settings.openAIAPIKey.isEmpty: return openAIEngine()
+            case .apple: return appleEngine()
+            default: break
+            }
+        }
+
+        // Global setting: honor ElevenLabs when selected and configured.
+        if settings.voiceEngine == .elevenlabs, settings.isElevenLabsConfigured {
+            return elevenLabsEngine()
+        }
+        if !settings.openAIAPIKey.isEmpty {
+            return openAIEngine()
         }
         if item.projectId != nil {
-            return AppleSpeechEngine(voiceIdentifier: appleVoice, rate: engineRate)
+            return appleEngine()
         }
         return nil
     }
@@ -531,12 +570,12 @@ final class AppCoordinator: SpeechQueueDelegate {
         relayControl(action: action, settings: settings)
     }
 
-    func onAckReceived(projectId: String) {
+    func onAckReceived(projectId: String, agentId: String?) {
         guard let settings = settingsRef else { return }
-        relayAck(projectId: projectId, settings: settings)
+        relayAck(projectId: projectId, agentId: agentId, settings: settings)
     }
 
-    private func relayAck(projectId: String, settings: SettingsManager) {
+    private func relayAck(projectId: String, agentId: String?, settings: SettingsManager) {
         let relayIDs = settings.activeSpeakers
         guard !relayIDs.isEmpty else { return }
 
@@ -545,7 +584,8 @@ final class AppCoordinator: SpeechQueueDelegate {
             guard let url = URL(string: "\(baseURL)/ack") else { continue }
 
             let peerName = peer.name
-            let payload: [String: Any] = ["project_id": projectId]
+            var payload: [String: Any] = ["project_id": projectId]
+            if let agentId { payload["agent_id"] = agentId }
             guard let body = try? JSONSerialization.data(withJSONObject: payload) else { continue }
             var req = URLRequest(url: url)
             req.httpMethod = "POST"
@@ -569,7 +609,9 @@ final class AppCoordinator: SpeechQueueDelegate {
         settings: SettingsManager,
         audioOnlyOverride: Bool? = nil,
         engineOverride: (any SpeechEngine)? = nil,
-        projectId: String? = nil
+        projectId: String? = nil,
+        agentId: String? = nil,
+        requestedEngine: VoiceEngineType? = nil
     ) async {
         queue.enqueue(
             text,
@@ -577,7 +619,9 @@ final class AppCoordinator: SpeechQueueDelegate {
             settings: settings,
             audioOnlyOverride: audioOnlyOverride,
             engineOverride: engineOverride,
-            projectId: projectId
+            projectId: projectId,
+            agentId: agentId,
+            requestedEngine: requestedEngine
         )
     }
 
@@ -593,8 +637,8 @@ final class AppCoordinator: SpeechQueueDelegate {
         queue.setSpeed(speed)
     }
 
-    func handleAck(projectId: String, appState: AppState) {
-        queue.handleAck(projectId: projectId, appState: appState)
+    func handleAck(projectId: String, agentId: String? = nil, appState: AppState) {
+        queue.handleAck(projectId: projectId, agentId: agentId, appState: appState)
     }
 
     func handleControl(_ control: HTTPRequestParser.ControlRequest) {

@@ -163,7 +163,7 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier(AccessibilityID.Settings.elevenLabsVoicePicker)
 
-                Toggle("Turbo (2x faster, 3x cheaper, lower quality)", isOn: $settings.elevenLabsTurbo)
+                Toggle("Low latency (Flash v2.5 — faster & cheaper)", isOn: $settings.elevenLabsTurbo)
 
                 HStack {
                     (Text("API Key Saved ") + Text(maskedElevenLabsKeySuffix).foregroundColor(.secondary.opacity(0.7)))

@@ -15,7 +15,7 @@ private final class FakeQueueDelegate: SpeechQueueDelegate {
         controlActions.append(action)
     }
 
-    func onAckReceived(projectId: String) {
+    func onAckReceived(projectId: String, agentId: String?) {
         ackProjectIds.append(projectId)
     }
 }
@@ -69,6 +69,26 @@ struct SpeechQueueCoordinatorTests {
         coordinator.handleAck(projectId: "proj-b", appState: appState)
         #expect(coordinator.activeSession != nil || true)
         #expect(delegate.ackProjectIds == ["proj-b"])
+    }
+
+    @Test func ackWithAgentIdNotifiesDelegate() async {
+        let (coordinator, delegate, appState, settings) = makeCoordinator()
+        coordinator.enqueue("Test", appState: appState, settings: settings, projectId: "proj-a", agentId: "sess-1")
+        try? await Task.sleep(for: .milliseconds(100))
+        coordinator.handleAck(projectId: "proj-a", agentId: "sess-1", appState: appState)
+        #expect(delegate.ackProjectIds == ["proj-a"])
+    }
+
+    @Test func ackForOtherAgentInSameProjectKeepsQueuedItem() async {
+        let (coordinator, _, appState, settings) = makeCoordinator()
+        // Two agents sharing a project; the second is queued behind the first.
+        coordinator.enqueue("First", appState: appState, settings: settings, projectId: "proj-a", agentId: "sess-1")
+        coordinator.enqueue("Second", appState: appState, settings: settings, projectId: "proj-a", agentId: "sess-2")
+        try? await Task.sleep(for: .milliseconds(50))
+        // Acking sess-1 must not remove sess-2's queued item.
+        coordinator.handleAck(projectId: "proj-a", agentId: "sess-1", appState: appState)
+        // sess-2's work survives — the queue keeps draining rather than going idle.
+        #expect(coordinator.activeSession != nil)
     }
 
     @Test func handleControlIgnoresOwnDeviceID() {

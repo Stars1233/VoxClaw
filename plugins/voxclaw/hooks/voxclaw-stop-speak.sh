@@ -141,10 +141,14 @@ text = text.strip()
 if len(text) < 3:
     sys.exit(0)
 
+# session_id identifies this specific agent session within the project, so each
+# concurrent agent gets its own voice and its acks do not stop sibling agents.
+agent_id = data.get("session_id") or "claude-code-stop-hook"
+
 body = json.dumps({
     "text": text,
     "project_id": os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd(),
-    "agent_id": "claude-code-stop-hook",
+    "agent_id": agent_id,
 }).encode()
 
 req = urllib.request.Request(

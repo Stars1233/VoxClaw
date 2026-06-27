@@ -22,7 +22,10 @@ actor ElevenLabsTTSService {
         self.apiKey = apiKey
         self.voiceID = voiceID
         self.speed = speed
-        self.modelID = turbo ? "eleven_turbo_v2_5" : "eleven_multilingual_v2"
+        // eleven_flash_v2_5 is the current low-latency streaming model (eleven_turbo_v2_5
+        // is deprecated and scheduled for removal). eleven_multilingual_v2 stays as the
+        // higher-fidelity option. Both support the with-timestamps alignment stream.
+        self.modelID = turbo ? "eleven_flash_v2_5" : "eleven_multilingual_v2"
     }
 
     struct TTSError: Error, CustomStringConvertible {
@@ -112,18 +115,67 @@ actor ElevenLabsTTSService {
         }
 
         var alignment: ElevenLabsAlignment?
-        if let alignmentDict = json["alignment"] as? [String: Any],
-           let charStartTimes = alignmentDict["char_start_times_ms"] as? [Int],
-           let charDurations = alignmentDict["char_durations_ms"] as? [Int],
-           let chars = alignmentDict["chars"] as? [String] {
-            alignment = ElevenLabsAlignment(
-                charStartTimesMs: charStartTimes,
-                charDurationsMs: charDurations,
-                chars: chars
-            )
+        if let alignmentDict = json["alignment"] as? [String: Any] {
+            alignment = Self.parseAlignment(alignmentDict)
         }
 
         return ElevenLabsChunk(audio: audioData, alignment: alignment)
+    }
+
+    /// Parse an ElevenLabs `alignment` object into the internal ms-based model.
+    ///
+    /// The HTTP `/stream/with-timestamps` endpoint returns seconds-based fields
+    /// (`characters`, `character_start_times_seconds`, `character_end_times_seconds`).
+    /// The WebSocket `stream-input` endpoint uses an ms-based schema
+    /// (`chars`, `char_start_times_ms`, `char_durations_ms`). We accept both so a
+    /// schema change on either path can't silently drop alignment data.
+    static func parseAlignment(_ dict: [String: Any]) -> ElevenLabsAlignment? {
+        // Current HTTP schema: seconds, start + end.
+        if let chars = dict["characters"] as? [String],
+           let startsSec = doubleArray(dict["character_start_times_seconds"]),
+           let endsSec = doubleArray(dict["character_end_times_seconds"]),
+           !chars.isEmpty {
+            let count = min(chars.count, startsSec.count, endsSec.count)
+            guard count > 0 else { return nil }
+            var startsMs: [Int] = []
+            var durationsMs: [Int] = []
+            var outChars: [String] = []
+            startsMs.reserveCapacity(count)
+            durationsMs.reserveCapacity(count)
+            outChars.reserveCapacity(count)
+            for i in 0..<count {
+                let startMs = Int((startsSec[i] * 1000).rounded())
+                let endMs = Int((endsSec[i] * 1000).rounded())
+                startsMs.append(startMs)
+                durationsMs.append(max(0, endMs - startMs))
+                outChars.append(chars[i])
+            }
+            return ElevenLabsAlignment(charStartTimesMs: startsMs, charDurationsMs: durationsMs, chars: outChars)
+        }
+
+        // Legacy / WebSocket schema: milliseconds, start + duration.
+        if let chars = dict["chars"] as? [String],
+           let starts = doubleArray(dict["char_start_times_ms"]),
+           let durations = doubleArray(dict["char_durations_ms"]),
+           !chars.isEmpty {
+            let count = min(chars.count, starts.count, durations.count)
+            guard count > 0 else { return nil }
+            return ElevenLabsAlignment(
+                charStartTimesMs: (0..<count).map { Int(starts[$0].rounded()) },
+                charDurationsMs: (0..<count).map { Int(durations[$0].rounded()) },
+                chars: Array(chars[0..<count])
+            )
+        }
+
+        return nil
+    }
+
+    /// Robustly decode a JSON number array (JSONSerialization yields `NSNumber`,
+    /// which won't cast to `[Int]` when the values are non-integral seconds).
+    private static func doubleArray(_ value: Any?) -> [Double]? {
+        if let nums = value as? [NSNumber] { return nums.map { $0.doubleValue } }
+        if let doubles = value as? [Double] { return doubles }
+        return nil
     }
 
     private func buildRequest(text: String) throws -> URLRequest {
@@ -141,14 +193,24 @@ actor ElevenLabsTTSService {
         request.addValue(apiKey, forHTTPHeaderField: "xi-api-key")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
+        // ElevenLabs "emotional" voice settings. Tune these to taste:
+        //  • style       0–1  style exaggeration; high = dramatic / "announcer". Keep low for neutral narration.
+        //  • stability    0–1  low = expressive but erratic; ~0.5 = balanced; high = flat/consistent.
+        //  • similarity   0–1  fidelity to the voice's timbre (not emotional).
+        //  • speakerBoost bool minor clarity/presence boost.
+        let style = 0.0
+        let stability = 0.5
+        let similarityBoost = 0.75
+        let useSpeakerBoost = true
+
         let body: [String: Any] = [
             "text": text,
             "model_id": modelID,
             "voice_settings": [
-                "stability": 0.4,
-                "similarity_boost": 0.75,
-                "style": 0.6,
-                "use_speaker_boost": true,
+                "stability": stability,
+                "similarity_boost": similarityBoost,
+                "style": style,
+                "use_speaker_boost": useSpeakerBoost,
             ] as [String: Any],
             "speed": Double(speed),
         ]

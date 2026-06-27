@@ -87,6 +87,51 @@ struct HTTPRequestParserTests {
         #expect(req?.voice == nil)
     }
 
+    // MARK: - engine override
+
+    @Test func parseReadRequestEngineOverride() {
+        let req = HTTPRequestParser.parseReadRequest(from: "{\"text\":\"hi\",\"engine\":\"elevenlabs\"}")
+        #expect(req?.engine == .elevenlabs)
+    }
+
+    @Test func parseReadRequestEngineIsCaseInsensitive() {
+        let req = HTTPRequestParser.parseReadRequest(from: "{\"text\":\"hi\",\"engine\":\"OpenAI\"}")
+        #expect(req?.engine == .openai)
+    }
+
+    @Test func parseReadRequestEngineDefaultsToNil() {
+        let req = HTTPRequestParser.parseReadRequest(from: "{\"text\":\"hi\"}")
+        #expect(req?.engine == nil)
+    }
+
+    @Test func parseReadRequestUnknownEngineIsNil() {
+        let req = HTTPRequestParser.parseReadRequest(from: "{\"text\":\"hi\",\"engine\":\"bogus\"}")
+        #expect(req?.engine == nil)
+    }
+
+    // MARK: - parseAckRequest
+
+    @Test func parseAckRequestProjectOnly() {
+        let ack = HTTPRequestParser.parseAckRequest(from: "{\"project_id\":\"/repo\"}")
+        #expect(ack?.projectId == "/repo")
+        #expect(ack?.agentId == nil)
+    }
+
+    @Test func parseAckRequestWithAgentId() {
+        let ack = HTTPRequestParser.parseAckRequest(from: "{\"project_id\":\"/repo\",\"agent_id\":\"sess-123\"}")
+        #expect(ack?.projectId == "/repo")
+        #expect(ack?.agentId == "sess-123")
+    }
+
+    @Test func parseAckRequestEmptyAgentIdBecomesNil() {
+        let ack = HTTPRequestParser.parseAckRequest(from: "{\"project_id\":\"/repo\",\"agent_id\":\"  \"}")
+        #expect(ack?.agentId == nil)
+    }
+
+    @Test func parseAckRequestMissingProjectIsNil() {
+        #expect(HTTPRequestParser.parseAckRequest(from: "{\"agent_id\":\"sess-123\"}") == nil)
+    }
+
     @Test func parseReadRequestEmpty() {
         #expect(HTTPRequestParser.parseReadRequest(from: "") == nil)
     }

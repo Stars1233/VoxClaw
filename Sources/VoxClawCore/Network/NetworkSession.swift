@@ -18,7 +18,7 @@ struct StatusInfo: Sendable {
 final class NetworkSession: Sendable {
     private let connection: NWConnection
     private let onReadRequest: @Sendable (ReadRequest) async -> Void
-    private let onAck: @Sendable (String) async -> Void
+    private let onAck: @Sendable (HTTPRequestParser.AckRequest) async -> Void
     private let onControl: @Sendable (HTTPRequestParser.ControlRequest) async -> Void
     private let statusProvider: @Sendable () async -> StatusInfo
 
@@ -26,7 +26,7 @@ final class NetworkSession: Sendable {
         connection: NWConnection,
         statusProvider: @escaping @Sendable () async -> StatusInfo,
         onReadRequest: @escaping @Sendable (ReadRequest) async -> Void,
-        onAck: @escaping @Sendable (String) async -> Void = { _ in },
+        onAck: @escaping @Sendable (HTTPRequestParser.AckRequest) async -> Void = { _ in },
         onControl: @escaping @Sendable (HTTPRequestParser.ControlRequest) async -> Void = { _ in }
     ) {
         self.connection = connection
@@ -243,14 +243,14 @@ final class NetworkSession: Sendable {
                 await onReadRequest(finalRequest)
             }
         case .ack:
-            guard let projectId = HTTPRequestParser.parseAckRequest(from: body) else {
+            guard let ack = HTTPRequestParser.parseAckRequest(from: body) else {
                 sendErrorResponse(status: 400, message: "Send JSON {\"project_id\":\"...\"}.")
                 return
             }
-            Log.network.info("Received ack for project: \(projectId, privacy: .public)")
+            Log.network.info("Received ack for project: \(ack.projectId, privacy: .public)")
             sendResponse(status: 200, body: "{\"status\":\"acknowledged\"}", contentType: "application/json")
             Task {
-                await onAck(projectId)
+                await onAck(ack)
             }
         case .control:
             guard let control = HTTPRequestParser.parseControlRequest(from: body) else {

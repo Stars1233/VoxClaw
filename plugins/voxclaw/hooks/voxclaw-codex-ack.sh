@@ -25,8 +25,15 @@ project_id = os.environ.get("CODEX_PROJECT_DIR") or os.getcwd()
 if not project_id:
     sys.exit(0)
 
+# Per-agent session id so acking one agent does not stop a sibling agent that
+# shares the project directory. Codex payloads vary; try the common field names.
+agent_id = data.get("session_id") or data.get("thread_id") or data.get("thread-id") or None
+
 ack_url = f"http://localhost:{port}/ack"
-body = json.dumps({"project_id": project_id}).encode()
+payload = {"project_id": project_id}
+if agent_id:
+    payload["agent_id"] = agent_id
+body = json.dumps(payload).encode()
 
 req = urllib.request.Request(
     ack_url,

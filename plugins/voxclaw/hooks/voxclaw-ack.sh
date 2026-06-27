@@ -26,8 +26,15 @@ project_id = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
 if not project_id:
     sys.exit(0)
 
+# session_id uniquely identifies this agent within the project, so acking a new
+# prompt only stops THIS agent — not another agent sharing the same directory.
+agent_id = data.get("session_id") or None
+
 ack_url = f"http://localhost:{port}/ack"
-body = json.dumps({"project_id": project_id}).encode()
+payload = {"project_id": project_id}
+if agent_id:
+    payload["agent_id"] = agent_id
+body = json.dumps(payload).encode()
 
 req = urllib.request.Request(
     ack_url,

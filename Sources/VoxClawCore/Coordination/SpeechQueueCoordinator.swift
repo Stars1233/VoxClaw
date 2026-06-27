@@ -9,14 +9,14 @@ public protocol SpeechQueueDelegate: AnyObject {
     func makeEngine(for item: SpeechQueueCoordinator.QueueItem, settings: SettingsManager) async -> (any SpeechEngine)?
     func currentBlockers() -> [String]
     func onControlAction(_ action: HTTPRequestParser.ControlAction)
-    func onAckReceived(projectId: String)
+    func onAckReceived(projectId: String, agentId: String?)
 }
 
 /// Default implementations so iOS doesn't need to implement blocker/relay stubs.
 public extension SpeechQueueDelegate {
     func currentBlockers() -> [String] { [] }
     func onControlAction(_ action: HTTPRequestParser.ControlAction) {}
-    func onAckReceived(projectId: String) {}
+    func onAckReceived(projectId: String, agentId: String?) {}
 }
 
 /// Platform-independent speech queue with project badges, transitions,
@@ -30,12 +30,18 @@ public final class SpeechQueueCoordinator {
         public let engineOverride: (any SpeechEngine)?
         public let audioOnlyOverride: Bool?
         public let projectId: String?
+        /// Agent identity within the project — used to assign a distinct voice per agent.
+        public let agentId: String?
+        /// Per-request engine selection, overriding the global setting. `nil` = use the setting.
+        public let requestedEngine: VoiceEngineType?
 
-        public init(text: String, engineOverride: (any SpeechEngine)? = nil, audioOnlyOverride: Bool? = nil, projectId: String? = nil) {
+        public init(text: String, engineOverride: (any SpeechEngine)? = nil, audioOnlyOverride: Bool? = nil, projectId: String? = nil, agentId: String? = nil, requestedEngine: VoiceEngineType? = nil) {
             self.text = text
             self.engineOverride = engineOverride
             self.audioOnlyOverride = audioOnlyOverride
             self.projectId = projectId
+            self.agentId = agentId
+            self.requestedEngine = requestedEngine
         }
     }
 
@@ -46,6 +52,7 @@ public final class SpeechQueueCoordinator {
     private var isDrainingQueue = false
     private var projectActivity = ProjectActivityTracker()
     private(set) var currentDrainingProjectId: String?
+    private(set) var currentDrainingAgentId: String?
     private var isCurrentItemAcked = false
 
     private static let maxQueueSize = 20
@@ -75,13 +82,17 @@ public final class SpeechQueueCoordinator {
         settings: SettingsManager,
         audioOnlyOverride: Bool? = nil,
         engineOverride: (any SpeechEngine)? = nil,
-        projectId: String? = nil
+        projectId: String? = nil,
+        agentId: String? = nil,
+        requestedEngine: VoiceEngineType? = nil
     ) {
         let item = QueueItem(
             text: text,
             engineOverride: engineOverride,
             audioOnlyOverride: audioOnlyOverride,
-            projectId: projectId
+            projectId: projectId,
+            agentId: agentId,
+            requestedEngine: requestedEngine
         )
         enqueueItem(item, appState: appState, settings: settings)
     }
@@ -106,24 +117,33 @@ public final class SpeechQueueCoordinator {
         activeSession?.setSpeed(speed)
     }
 
-    public func handleAck(projectId: String, appState: AppState) {
-        Log.session.info("Ack received for project: \(projectId, privacy: .public)")
+    public func handleAck(projectId: String, agentId: String? = nil, appState: AppState) {
+        Log.session.info("Ack received for project: \(projectId, privacy: .public), agent: \(agentId ?? "—", privacy: .public)")
 
-        if currentDrainingProjectId == projectId {
+        // When an agentId is supplied, scope the ack to that agent only — so prompting
+        // one agent never stops another agent that happens to share the project (cwd).
+        // When nil (older clients), fall back to whole-project matching.
+        func matches(project: String?, agent: String?) -> Bool {
+            guard project == projectId else { return false }
+            guard let agentId else { return true }
+            return agent == agentId
+        }
+
+        if matches(project: currentDrainingProjectId, agent: currentDrainingAgentId) {
             Log.session.info("Ack: marking current session as acknowledged")
             isCurrentItemAcked = true
             playAckSound()
         }
 
         let before = speechQueue.count
-        speechQueue.removeAll { $0.projectId == projectId }
+        speechQueue.removeAll { matches(project: $0.projectId, agent: $0.agentId) }
         let removed = before - speechQueue.count
         if removed > 0 {
             Log.session.info("Ack: removed \(removed, privacy: .public) queued items for project")
             rebuildProjectIndicators(appState: appState)
         }
 
-        delegate?.onAckReceived(projectId: projectId)
+        delegate?.onAckReceived(projectId: projectId, agentId: agentId)
     }
 
     public func handleControl(_ control: HTTPRequestParser.ControlRequest, deviceID: String) {
@@ -181,6 +201,7 @@ public final class SpeechQueueCoordinator {
             let hasMoreItems = !speechQueue.isEmpty
 
             currentDrainingProjectId = item.projectId
+            currentDrainingAgentId = item.agentId
             rebuildProjectIndicators(appState: appState)
 
             let goSilent = await waitForBlockersIfNeeded()
@@ -259,6 +280,7 @@ public final class SpeechQueueCoordinator {
             appState.silentMode = false
 
             currentDrainingProjectId = nil
+            currentDrainingAgentId = nil
             rebuildProjectIndicators(appState: appState)
 
             if hasMoreItems {

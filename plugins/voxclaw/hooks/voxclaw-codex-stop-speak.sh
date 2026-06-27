@@ -127,10 +127,14 @@ text = text.strip()
 if len(text) < 3:
     sys.exit(0)
 
+# Per-agent session id so each concurrent agent gets its own voice and its acks
+# do not stop sibling agents. Codex payloads vary; try the common field names.
+agent_id = data.get("session_id") or data.get("thread_id") or data.get("thread-id") or "codex-stop-hook"
+
 body = json.dumps({
     "text": text,
     "project_id": os.environ.get("CODEX_PROJECT_DIR") or os.getcwd(),
-    "agent_id": "codex-stop-hook",
+    "agent_id": agent_id,
 }).encode()
 
 req = urllib.request.Request(
