@@ -1,10 +1,16 @@
 # Build and attach VoxClaw.app to GitHub Releases when a version tag is pushed.
 # Usage: git tag v1.0.0 && git push origin v1.0.0
 #
-# For Developer ID signing (no Gatekeeper warning), add these repo secrets:
+# For a Gatekeeper-clean download you need BOTH Developer ID signing AND
+# notarization (signing alone is rejected as "Unnotarized Developer ID").
+# Signing secrets:
 #   MACOS_CERTIFICATE_P12_BASE64  - base64 of your .p12 (base64 -i cert.p12 | pbcopy)
 #   MACOS_CERTIFICATE_PASSWORD   - password for the .p12
 #   APP_IDENTITY                 - e.g. "Developer ID Application: Your Name (TEAM_ID)"
+# Notarization secrets:
+#   APPLE_ID                     - Apple ID email for the developer account
+#   APPLE_TEAM_ID                - 10-char team id (e.g. X2RKZ5TG99)
+#   APPLE_NOTARY_PASSWORD        - app-specific password from appleid.apple.com
 name: Release
 
 on:
@@ -52,6 +58,26 @@ jobs:
         run: |
           swift build -c release
           ./Scripts/package_app.sh release
+
+      # Notarize so downloads don't hit a Gatekeeper prompt. A Developer ID
+      # signature alone is rejected as "Unnotarized Developer ID"; notarization +
+      # stapling is what makes it launch cleanly. Skips gracefully if creds absent.
+      - name: Notarize & staple
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_NOTARY_PASSWORD: ${{ secrets.APPLE_NOTARY_PASSWORD }}
+        run: |
+          if [[ -z "${APPLE_NOTARY_PASSWORD:-}" || -z "${APPLE_ID:-}" || -z "${APPLE_TEAM_ID:-}" ]]; then
+            echo "Notarization credentials not set; skipping (build will be unnotarized)."
+            exit 0
+          fi
+          ditto -c -k --sequesterRsrc --keepParent VoxClaw.app notarize.zip
+          xcrun notarytool submit notarize.zip \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_NOTARY_PASSWORD" --wait
+          xcrun stapler staple VoxClaw.app
+          xcrun stapler validate VoxClaw.app
+          rm -f notarize.zip
 
       - name: Zip app
         run: ditto -c -k --sequesterRsrc --keepParent VoxClaw.app VoxClaw.zip
