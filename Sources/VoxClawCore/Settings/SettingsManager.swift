@@ -26,6 +26,7 @@ public final class SettingsManager {
         static let networkListenerEnabled = "networkListenerEnabled"
         static let networkListenerPort = "networkListenerPort"
         static let backgroundKeepAlive = "backgroundKeepAlive"
+        static let cloudRelayEnabled = "cloudRelayEnabled"
         static let rememberOverlayPosition = "rememberOverlayPosition"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let overlayAppearance = "overlayAppearance"
@@ -152,6 +153,17 @@ public final class SettingsManager {
         didSet {
             UserDefaults.standard.set(backgroundKeepAlive, forKey: "backgroundKeepAlive")
             NSUbiquitousKeyValueStore.default.set(backgroundKeepAlive, forKey: KVSKey.backgroundKeepAlive)
+        }
+    }
+
+    /// Relay agent speech between the user's devices via CloudKit. On the Mac
+    /// this gates *sending* a speech request; on iOS it gates *subscribing* and
+    /// speaking incoming requests (waking the app via silent push). Synced via
+    /// iCloud KVS so one toggle enables the whole relay across devices.
+    public var cloudRelayEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(cloudRelayEnabled, forKey: "cloudRelayEnabled")
+            NSUbiquitousKeyValueStore.default.set(cloudRelayEnabled, forKey: KVSKey.cloudRelayEnabled)
         }
     }
 
@@ -322,6 +334,12 @@ public final class SettingsManager {
             self.backgroundKeepAlive = UserDefaults.standard.bool(forKey: "backgroundKeepAlive")
         }
 
+        if kvs.object(forKey: KVSKey.cloudRelayEnabled) != nil {
+            self.cloudRelayEnabled = kvs.bool(forKey: KVSKey.cloudRelayEnabled)
+        } else {
+            self.cloudRelayEnabled = UserDefaults.standard.bool(forKey: "cloudRelayEnabled")
+        }
+
         if kvs.object(forKey: KVSKey.rememberOverlayPosition) != nil {
             self.rememberOverlayPosition = kvs.bool(forKey: KVSKey.rememberOverlayPosition)
         } else {
@@ -404,6 +422,7 @@ public final class SettingsManager {
         kvs.set(networkListenerEnabled, forKey: KVSKey.networkListenerEnabled)
         kvs.set(Int(networkListenerPort), forKey: KVSKey.networkListenerPort)
         kvs.set(backgroundKeepAlive, forKey: KVSKey.backgroundKeepAlive)
+        kvs.set(cloudRelayEnabled, forKey: KVSKey.cloudRelayEnabled)
         kvs.set(rememberOverlayPosition, forKey: KVSKey.rememberOverlayPosition)
         kvs.set(hasCompletedOnboarding, forKey: KVSKey.hasCompletedOnboarding)
         if let data = try? JSONEncoder().encode(overlayAppearance) {
@@ -565,6 +584,14 @@ public final class SettingsManager {
                     }
                 }
 
+                if changedKeys.contains(KVSKey.cloudRelayEnabled) {
+                    let value = kvs.bool(forKey: KVSKey.cloudRelayEnabled)
+                    if value != self.cloudRelayEnabled {
+                        self.cloudRelayEnabled = value
+                        Log.settings.info("Cloud relay toggle updated from iCloud KVS")
+                    }
+                }
+
                 if changedKeys.contains(KVSKey.rememberOverlayPosition) {
                     let value = kvs.bool(forKey: KVSKey.rememberOverlayPosition)
                     if value != self.rememberOverlayPosition {
@@ -624,6 +651,40 @@ public final class SettingsManager {
             let primary = ElevenLabsSpeechEngine(apiKey: elevenLabsAPIKey, voiceID: elevenLabsVoiceID, speed: voiceSpeed, turbo: elevenLabsTurbo)
             let fallback = AppleSpeechEngine(voiceIdentifier: appleVoiceIdentifier, rate: voiceSpeed)
             return FallbackSpeechEngine(primary: primary, fallback: fallback)
+        }
+    }
+
+    /// Builds an engine for an explicit engine + voice. Used by the relay receiver
+    /// to reproduce the sender's per-agent voice verbatim (the sender owns the
+    /// agent→voice mapping; receivers must not re-derive it). Falls back to Apple
+    /// when the requested engine isn't configured on this device.
+    public func makeRelayEngine(engine: VoiceEngineType, voice: String?) -> any SpeechEngine {
+        let instructions = readingStyle.isEmpty ? nil : readingStyle
+        let apple = AppleSpeechEngine(
+            voiceIdentifier: (engine == .apple ? voice : nil) ?? appleVoiceIdentifier,
+            rate: voiceSpeed
+        )
+        switch engine {
+        case .apple:
+            return apple
+        case .openai where isOpenAIConfigured:
+            let primary = OpenAISpeechEngine(apiKey: openAIAPIKey, voice: voice ?? openAIVoice, speed: voiceSpeed, instructions: instructions)
+            return FallbackSpeechEngine(primary: primary, fallback: apple)
+        case .elevenlabs where isElevenLabsConfigured:
+            let primary = ElevenLabsSpeechEngine(apiKey: elevenLabsAPIKey, voiceID: voice ?? elevenLabsVoiceID, speed: voiceSpeed, turbo: elevenLabsTurbo)
+            return FallbackSpeechEngine(primary: primary, fallback: apple)
+        default:
+            return apple
+        }
+    }
+
+    /// The configured default voice id for an engine (used by the sender when an
+    /// agent has no assigned voice yet).
+    public func defaultVoice(for engine: VoiceEngineType) -> String? {
+        switch engine {
+        case .openai: return openAIVoice
+        case .apple: return appleVoiceIdentifier
+        case .elevenlabs: return elevenLabsVoiceID
         }
     }
 }

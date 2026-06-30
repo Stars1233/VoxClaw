@@ -382,6 +382,7 @@ final class AppCoordinator: SpeechQueueDelegate {
     let queue = SpeechQueueCoordinator()
     let voiceAssigner = VoiceAssigner(store: VoiceBindingStore(fileURL: VoiceBindingStore.defaultURL()))
     let peerBrowser = PeerBrowser()
+    let cloudRelay = CloudSpeechRelay()
     let deviceID = UUID().uuidString
     private var settingsRef: SettingsManager?
 
@@ -438,7 +439,45 @@ final class AppCoordinator: SpeechQueueDelegate {
         }
 
         if !request.relayed {
-            relayToPeers(request: resolvedRequest, settings: settings)
+            // Stamp the effective engine + the voice resolved for it, so receivers
+            // (iOS, LAN peers) reproduce the same per-agent voice instead of
+            // re-deriving their own (which diverges across devices).
+            let effectiveEngine = request.engine ?? settings.voiceEngine
+            var relayVoice = request.voice
+            if relayVoice == nil {
+                relayVoice = await voiceAssigner.resolveVoice(projectId: request.projectId, agentId: request.agentId, engine: effectiveEngine)
+            }
+            let relayVoiceFinal = relayVoice ?? settings.defaultVoice(for: effectiveEngine)
+            var relayRequest = resolvedRequest
+            relayRequest.engine = effectiveEngine
+            relayRequest.voice = relayVoiceFinal
+            relayToPeers(request: relayRequest, settings: settings)
+            relayToCloud(request: relayRequest, settings: settings)
+        }
+    }
+
+    /// Relays a speech request to the user's other devices via CloudKit, which
+    /// silent-pushes (and wakes) a backgrounded/locked iPhone the LAN can't reach.
+    /// Opt-in via `cloudRelayEnabled`; never re-relays an already-relayed request.
+    private func relayToCloud(request: ReadRequest, settings: SettingsManager) {
+        guard settings.cloudRelayEnabled else { return }
+        let payload = CloudSpeechRelay.Payload(
+            text: request.text,
+            voice: request.voice,
+            rate: request.rate,
+            instructions: request.instructions,
+            projectId: request.projectId,
+            agentId: request.agentId,
+            engine: request.engine
+        )
+        let relay = cloudRelay
+        Task.detached {
+            do {
+                try await relay.send(payload)
+                Log.network.info("Relayed speech request via CloudKit")
+            } catch {
+                Log.network.error("CloudKit relay failed: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 
@@ -457,6 +496,7 @@ final class AppCoordinator: SpeechQueueDelegate {
             if let i = request.instructions { payload["instructions"] = i }
             if let p = request.projectId { payload["project_id"] = p }
             if let a = request.agentId { payload["agent_id"] = a }
+            if let e = request.engine { payload["engine"] = e.rawValue }
 
             guard let body = try? JSONSerialization.data(withJSONObject: payload) else { continue }
             var urlRequest = URLRequest(url: url)
