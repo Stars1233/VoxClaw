@@ -6,16 +6,6 @@
     <description>Software updates for VoxClaw.</description>
     <language>en</language>
 <item>
-      <title>VoxClaw 1.4.2</title>
-      <link>https://github.com/malpern/VoxClaw/releases/tag/v1.4.2</link>
-      <sparkle:version>11</sparkle:version>
-      <sparkle:shortVersionString>1.4.2</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <pubDate>Sat, 25 Jul 2026 21:31:42 +0000</pubDate>
-      <description><![CDATA[<p>See the <a href="https://github.com/malpern/VoxClaw/releases/tag/v1.4.2">release notes</a>.</p>]]></description>
-      <enclosure url="https://github.com/malpern/VoxClaw/releases/download/v1.4.2/VoxClaw.zip" sparkle:edSignature="9KNwp7+iHFXHMk8Am/OB3NUMZ3h3GxwZCwAt7CGCY8lgiCs8WXGs1sWLEVtSVAB1GMc+T0suwcIZuBzWcumtCA==" length="5268383" type="application/octet-stream" />
-    </item>
-<item>
       <title>VoxClaw 1.4.1</title>
       <link>https://github.com/malpern/VoxClaw/releases/tag/v1.4.1</link>
       <sparkle:version>10</sparkle:version>
